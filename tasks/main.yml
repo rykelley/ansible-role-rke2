@@ -21,6 +21,19 @@
   when:
     - rke2_ha_mode | bool
 
+- name: Enable IPVS kernel module
+  community.general.modprobe:
+    name: ip_vs
+    state: present
+    persistent: present
+  when:
+    - rke2_kubevip_ipvs_lb_enable | bool
+    - inventory_hostname in groups[rke2_servers_group_name]
+    - rke2_ha_mode | bool
+    - rke2_ha_mode_kubevip | bool
+    - not rke2_ha_mode_keepalived | bool
+
+
 - name: Copy kube-vip manifests to the masternode
   ansible.builtin.include_tasks: kubevip.yml
   when:
@@ -41,21 +54,27 @@
     - active_server is defined
     - groups[rke2_cluster_group_name] | length | int >= 2
 
-- name: Rolling restart
+- name: Rolling cordon and drain restart when version changes
   ansible.builtin.include_tasks: rolling_restart.yml
   with_items: "{{ groups[rke2_cluster_group_name] }}"
   loop_control:
     loop_var: _host_item
-  when: ( hostvars[_host_item].inventory_hostname == inventory_hostname ) and installed_rke2_version.stdout is defined and rke2_version != ( installed_rke2_version.stdout | default({}) )
+  when:
+    - hostvars[_host_item].inventory_hostname == inventory_hostname
+    - installed_version != "not installed"
+    - rke2_version != running_version
 
-- name: Restart service when config file is changed
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers
+
+- name: Rolling restart when config files change
   ansible.builtin.include_tasks: change_config.yml
   with_items: "{{ groups[rke2_cluster_group_name] }}"
   loop_control:
     loop_var: _host_item
   when:
-  - hostvars[_host_item].inventory_hostname == inventory_hostname
-  - (rke2_config_file_is_changed is defined and rke2_config_file_is_changed.changed) or (containerd_config_file_is_changed is defined and containerd_config_file_is_changed.changed)
+    - hostvars[_host_item].inventory_hostname == inventory_hostname
+    - rke2_restart_needed
 
 - name: Final steps
   ansible.builtin.include_tasks: summary.yml

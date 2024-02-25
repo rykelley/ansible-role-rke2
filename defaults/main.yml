@@ -26,6 +26,8 @@ rke2_api_ip: "{{ hostvars[groups[rke2_servers_group_name].0]['ansible_default_ip
 
 # optional option for kubevip
 # rke2_interface: eth0
+# optional option for IPv4/IPv6 addresses to advertise for node
+# rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
 
 # kubevip load balancer IP range
 rke2_loadbalancer_ip_range: {}
@@ -39,7 +41,24 @@ rke2_kubevip_cloud_provider_enable: true
 rke2_kubevip_svc_enable: true
 
 # Specify which image is used for kube-vip container
-rke2_kubevip_image: ghcr.io/kube-vip/kube-vip:v0.5.5
+rke2_kubevip_image: ghcr.io/kube-vip/kube-vip:v0.6.4
+
+# Specify which image is used for kube-vip cloud provider container
+rke2_kubevip_cloud_provider_image: ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.4
+
+# Enable kube-vip IPVS load balancer for control plane
+rke2_kubevip_ipvs_lb_enable: false
+# Enable layer 4 load balancing for control plane using IPVS kernel module
+# Must use kube-vip version 0.4.0 or later
+
+
+# (Optional) A list of kube-vip flags
+# All flags can be found here https://kube-vip.io/docs/installation/flags/
+# rke2_kubevip_args: []
+# - param: lb_enable
+#   value: true
+# - param: lb_port
+#   value: 6443
 
 # Add additional SANs in k8s API TLS cert
 rke2_additional_sans: []
@@ -98,7 +117,7 @@ rke2_airgap_copy_sourcepath: local_artifacts
 # (File extensions in the list and on the real files must be retained)
 rke2_airgap_copy_additional_tarballs: []
 
-# Destination for airgap additional images tarballs ( see https://docs.rke2.io/install/airgap/#tarball-method )
+# Destination for airgap additional images tarballs ( see https://docs.rke2.io/install/airgap#tarball-method )
 rke2_tarball_images_path: "{{ rke2_data_path }}/agent/images"
 
 # Architecture to be downloaded, currently there are releases for amd64 and s390x
@@ -203,17 +222,19 @@ rke2_agents_group_name: workers
 # k8s_node_label: []
 
 # (Optional) Additional RKE2 server configuration options
-# You could find the flags at https://docs.rke2.io/install/install_options/install_options/#configuring-rke2-server-nodes
+# You could find the flags at https://docs.rke2.io/reference/server_config
 # rke2_server_options:
 #   - "option: value"
+#   - "node-ip: {{ rke2_bind_address }}"  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
 
 # (Optional) Additional RKE2 agent configuration options
-# You could find the flags at https://docs.rke2.io/install/install_options/install_options/#configuring-linux-rke2-agent-nodes
+# You could find the flags at https://docs.rke2.io/reference/linux_agent_config
 # rke2_agent_options:
 #   - "option: value"
+#   - "node-ip: {{ rke2_bind_address }}"  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
 
 # (Optional) Configure Proxy
-# All flags can be found here https://github.com/rancher/rke2/blob/master/docs/advanced.md#configuring-an-http-proxy
+# All flags can be found here https://docs.rke2.io/advanced#configuring-an-http-proxy
 # rke2_environment_options: []
 #   - "option=value"
 #   - "HTTP_PROXY=http://your-proxy.example.com:8888"
