@@ -18,9 +18,9 @@ The Role can install the RKE2 in 3 modes:
 - RKE2 Cluster with Server(Master) in High Availability mode and zero or more Agent(Worker) nodes. In HA mode you should have an odd number (three recommended) of server(master) nodes that will run etcd, the Kubernetes API (Keepalived VIP or Kube-VIP address), and other control plane services.
 
 ---
-- Additionaly it is possible to install the RKE2 Cluster (all 3 modes) in Air-Gapped functionality with the use of local artifacts.
+- Additionally it is possible to install the RKE2 Cluster (all 3 modes) in Air-Gapped functionality with the use of local artifacts.
 
-> It is possible to upgrade RKE2 by changing `rke2_version` variable and re-running the playbook with this role. During the upgrade process the RKE2 service on the nodes wil be restarted one by one. The Ansible Role will check if the node on which the service was restarted is in Ready state and only then procede with restarting service on another Kubernetes node.
+> It is possible to upgrade RKE2 by changing `rke2_version` variable and re-running the playbook with this role. During the upgrade process the RKE2 service on the nodes will be restarted one by one. The Ansible Role will check if the node on which the service was restarted is in Ready state and only then proceed with restarting service on another Kubernetes node.
 
 ## Requirements
 
@@ -90,6 +90,13 @@ rke2_kubevip_ipvs_lb_enable: false
 # Enable layer 4 load balancing for control plane using IPVS kernel module
 # Must use kube-vip version 0.4.0 or later
 
+rke2_kubevip_service_election_enable: true
+# By default ARP mode provides a HA implementation of a VIP (your service IP address) which will receive traffic on the kube-vip leader.
+# To circumvent this kube-vip has implemented a new function which is "leader election per service",
+# instead of one node becoming the leader for all services an election is held across all kube-vip instances and the leader from that election becomes the holder of that service. Ultimately,
+# this means that every service can end up on a different node when it is created in theory preventing a bottleneck in the initial deployment.
+# minimum kube-vip version 0.5.0
+
 # (Optional) A list of kube-vip flags
 # All flags can be found here https://kube-vip.io/docs/installation/flags/
 # rke2_kubevip_args: []
@@ -97,6 +104,9 @@ rke2_kubevip_ipvs_lb_enable: false
 #   value: true
 # - param: lb_port
 #   value: 6443
+
+# Prometheus metrics port for kube-vip
+rke2_kubevip_metrics_port: 2112
 
 # Add additional SANs in k8s API TLS cert
 rke2_additional_sans: []
@@ -173,6 +183,13 @@ rke2_disable:
 
 # Option to disable kube-proxy
 disable_kube_proxy: false
+
+# Option to disable builtin cloud controller - mostly for onprem
+rke2_disable_cloud_controller: false
+
+# Cloud provider to use for the cluster (aws, azure, gce, openstack, vsphere, external)
+# applicable only if rke2_disable_cloud_controller is true
+rke2_cloud_provider_name: "rke2"
 
 # Path to custom manifests deployed during the RKE2 installation
 # It is possible to use Jinja2 templating in the manifests
@@ -295,6 +312,14 @@ rke2_wait_for_all_pods_to_be_ready: false
 
 # Enable debug mode (rke2-service)
 rke2_debug: false
+
+# (Optional) Customize default kubelet arguments
+# rke2_kubelet_arg:
+#   - "--system-reserved=cpu=100m,memory=100Mi"
+
+# (Optional) Customize default kube-proxy arguments
+# rke2_kube_proxy_arg:
+#   - "proxy-mode=ipvs"
 ```
 
 ## Inventory file example
