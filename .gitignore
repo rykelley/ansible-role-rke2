@@ -17,3 +17,4 @@ rke2/artifact/rke2-images-cilium.linux-amd64.tar.gz
 rke2/artifact/rke2-images-core.linux-amd64.tar.gz
 rke2/artifact/rke2-images.linux-amd64.tar.gz
 rke2/artifact/rke2.linux-amd64.tar.gz
+rke2/*
