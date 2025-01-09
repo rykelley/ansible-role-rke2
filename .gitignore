@@ -11,10 +11,4 @@ files/local_artifacts/rke2.linux-amd64.tar.gz
 files/local_artifacts/rke2.linux-amd64/.DS_Store
 files/local_artifacts/rke2.linux-amd64/lib/.DS_Store
 inventory/homelab/hosts.ini
-rke2/.DS_Store
-rke2/artifact/.DS_Store
-rke2/artifact/rke2-images-cilium.linux-amd64.tar.gz
-rke2/artifact/rke2-images-core.linux-amd64.tar.gz
-rke2/artifact/rke2-images.linux-amd64.tar.gz
-rke2/artifact/rke2.linux-amd64.tar.gz
 rke2/*
