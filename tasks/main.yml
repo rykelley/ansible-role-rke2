@@ -1,4 +1,8 @@
 ---
+- name: Set Baseline
+  ansible.builtin.include_tasks: baseline.yml
+  when:
+    - inventory_hostname in groups[all]
 
 - name: Install Keepalived when HA mode is enabled
   ansible.builtin.include_tasks: keepalived.yml
