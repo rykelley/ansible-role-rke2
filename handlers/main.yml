@@ -20,3 +20,18 @@
 - name: Service (re)started
   ansible.builtin.set_fact:
     rke2_restart_needed: false
+
+- name: Kill firewall 
+  ansible.builtin.service:
+    state: stopped
+    name: "firewalld"
+
+- name: Restart NetworkManager
+  ansible.builtin.service:
+    state: restarted
+    name: NetworkManager
+
+- name: reload NetworkManager
+  ansible.builtin.service:
+    state: reloaded
+    name: NetworkManager
