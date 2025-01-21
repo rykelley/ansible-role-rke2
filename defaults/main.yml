@@ -243,15 +243,14 @@ rke2_agents_group_name: workers
 
 # (Optional) Additional RKE2 server configuration options
 # You could find the flags at https://docs.rke2.io/reference/server_config
-# rke2_server_options:
-#   - "option: value"
-#   - "node-ip: {{ rke2_bind_address }}"  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
+rke2_server_options:
+  - node-ip: {{ rke2_bind_address }}  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
 
 # (Optional) Additional RKE2 agent configuration options
 # You could find the flags at https://docs.rke2.io/reference/linux_agent_config
-# rke2_agent_options:
-#   - "option: value"
-#   - "node-ip: {{ rke2_bind_address }}"  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
+rke2_agent_options:
+  - node-ip: {{ rke2_bind_address }} # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
+
 
 # (Optional) Configure Proxy
 # All flags can be found here https://docs.rke2.io/advanced#configuring-an-http-proxy
