@@ -111,3 +111,5 @@
         name: NetworkManager
         state: reloaded
 
+  roles:
+    - role: lablabs.rke2s

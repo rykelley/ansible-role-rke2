@@ -8,5 +8,11 @@ spec:
     kubeProxyReplacement: true
     k8sServiceHost: 10.10.1.30
     k8sServicePort: 6443
+    hubble:
+      enabled: true
+      relay:
+        enabled: true
+      ui:
+        enabled: true
     cni:
       chainingMode: "none"
