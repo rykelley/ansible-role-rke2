@@ -12,3 +12,4 @@ files/local_artifacts/rke2.linux-amd64/.DS_Store
 files/local_artifacts/rke2.linux-amd64/lib/.DS_Store
 inventory/homelab/hosts.ini
 rke2/*
+.DS_Store
