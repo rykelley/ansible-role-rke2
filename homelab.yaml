@@ -1,0 +1,19 @@
+---
+- name: Deploy RKE2
+  hosts: all
+  become: yes
+  vars:
+    rke2_download_kubeconf: true
+    rke2_version: v1.30.8+rke2r1
+    rke2_api_ip: 10.10.1.30
+    rke2_architecture: amd64
+    rke2_cni: cilium
+    rke2_cis_profile: ""
+    rke2_disable_cloud_controller: true
+    rke2_cloud_provider_name: "external"
+    disable_kube_proxy: true
+    rke2_custom_manifests: 
+      - manifests/rke2-cilium-config.yaml
+
+  roles:
+    - role: lablabs.rke2

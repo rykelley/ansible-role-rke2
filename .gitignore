@@ -1,7 +1,6 @@
 .cache
 .vscode
 .idea
-homelab.yaml
 service-restart.yml
 files/local_artifacts/.DS_Store
 files/local_artifacts/rke2-images-cilium.linux-amd64.tar.gz
