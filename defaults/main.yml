@@ -3,11 +3,11 @@
 rke2_type: "{{ 'server' if inventory_hostname in groups[rke2_servers_group_name] else 'agent' if inventory_hostname in groups[rke2_agents_group_name] }}"
 
 # Deploy the control plane in HA mode
-rke2_ha_mode: false
+rke2_ha_mode: true
 
 # Install and configure Keepalived on Server nodes
 # Can be disabled if you are using pre-configured Load Balancer
-rke2_ha_mode_keepalived: true
+rke2_ha_mode_keepalived: false
 
 # Install and configure kube-vip LB and VIP for cluster
 # rke2_ha_mode_keepalived needs to be false
@@ -27,31 +27,31 @@ rke2_api_ip: "{{ hostvars[groups[rke2_servers_group_name].0]['ansible_default_ip
 # optional option for kubevip
 # rke2_interface: eth0
 # optional option for IPv4/IPv6 addresses to advertise for node
-# rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
+rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
 
 # kubevip load balancer IP range
-rke2_loadbalancer_ip_range: {}
-#  range-global: 192.168.1.50-192.168.1.100
+# rke2_loadbalancer_ip_range:
+#   range-global: 10.10.1.50-10.10.1.75
 #  cidr-finance: 192.168.0.220/29,192.168.0.230/29
 
 # Install kubevip cloud provider if rke2_ha_mode_kubevip is true
-rke2_kubevip_cloud_provider_enable: true
+rke2_kubevip_cloud_provider_enable: false
 
 # Enable kube-vip to watch Services of type LoadBalancer
-rke2_kubevip_svc_enable: true
+rke2_kubevip_svc_enable: false
 
 # Specify which image is used for kube-vip container
 rke2_kubevip_image: ghcr.io/kube-vip/kube-vip:v0.6.4
 
 # Specify which image is used for kube-vip cloud provider container
-rke2_kubevip_cloud_provider_image: ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.4
+# rke2_kubevip_cloud_provider_image: ghcr.io/kube-vip/kube-vip-cloud-provider:v0.0.4
 
 # Enable kube-vip IPVS load balancer for control plane
 rke2_kubevip_ipvs_lb_enable: false
 # Enable layer 4 load balancing for control plane using IPVS kernel module
 # Must use kube-vip version 0.4.0 or later
 
-rke2_kubevip_service_election_enable: true
+rke2_kubevip_service_election_enable: false
 # By default ARP mode provides a HA implementation of a VIP (your service IP address) which will receive traffic on the kube-vip leader.
 # To circumvent this kube-vip has implemented a new function which is "leader election per service",
 # instead of one node becoming the leader for all services an election is held across all kube-vip instances and the leader from that election becomes the holder of that service. Ultimately,
@@ -60,7 +60,7 @@ rke2_kubevip_service_election_enable: true
 
 # (Optional) A list of kube-vip flags
 # All flags can be found here https://kube-vip.io/docs/installation/flags/
-# rke2_kubevip_args: []
+# rke2_kubevip_args: 
 # - param: lb_enable
 #   value: true
 # - param: lb_port
@@ -73,7 +73,7 @@ rke2_kubevip_metrics_port: 2112
 rke2_additional_sans: []
 
 # Configure cluster domain
-# rke2_cluster_domain: cluster.example.net
+rke2_cluster_domain: cluster.local
 
 # API Server destination port
 rke2_apiserver_dest_port: 6443
@@ -89,7 +89,7 @@ rke2_agent_node_taints: []
 rke2_token: defaultSecret12345
 
 # RKE2 version
-rke2_version: v1.25.3+rke2r1
+rke2_version: v1.30.9+rke2r1
 
 # URL to RKE2 repository
 rke2_channel_url: https://update.rke2.io/v1-release/channels
@@ -143,10 +143,10 @@ rke2_channel: stable
 
 # Do not deploy packaged components and delete any deployed components
 # Valid items: rke2-canal, rke2-coredns, rke2-ingress-nginx, rke2-metrics-server
-rke2_disable:
+rke2_disable: rke2-canal
 
 # Option to disable kube-proxy
-disable_kube_proxy: false
+disable_kube_proxy: true
 
 # Option to disable builtin cloud controller - mostly for onprem
 rke2_disable_cloud_controller: true
@@ -297,11 +297,11 @@ rke2_node_name: "{{ inventory_hostname }}"
 
 # default pod network range for rke2
 rke2_cluster_cidr:
-  - 10.42.0.0/16
+  - 192.168.0.0/16
 
 # default service network range for rke2
 rke2_service_cidr:
-  - 10.43.0.0/16
+  - 172.16.0.0/16
 
 # Enable SELinux for rke2
 rke2_selinux: false

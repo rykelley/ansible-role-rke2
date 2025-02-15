@@ -5,10 +5,11 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    kubeProxyReplacement: true
+    kubeProxyReplacement: strict
     k8sServiceHost: 10.10.1.30
     k8sServicePort: 6443
     localRedirectPolicy: true
+    autoDirectNodeRoutes: true
     hubble:
       enabled: true
       relay:

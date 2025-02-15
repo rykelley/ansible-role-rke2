@@ -8,7 +8,12 @@
     rke2_api_ip: 10.10.1.30
     rke2_architecture: amd64
     rke2_cni: cilium
+    rke2_cluster_cidr:
+      - 192.168.0.0/16
+    rke2_service_cidr:
+      - 172.16.0.0/16
     rke2_cis_profile: ""
+    rke2_selinux: false
     rke2_disable_cloud_controller: true
     rke2_cloud_provider_name: "external"
     disable_kube_proxy: true

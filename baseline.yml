@@ -1,39 +1,8 @@
 ---
-- name: Deploy RKE2
+- name: Set OS Baseline
   hosts: all
   become: yes
   tasks:
-
-    - name: Gather facts
-      ansible.builtin.setup:
-        gather_subset:
-          - network
-
-    - name: Get the internal IP
-      set_fact:
-        node_internal_ip: "{{ ansible_facts.default_ipv4.address }}"
-
-    - name: Ensure RKE2 config directory exists
-      ansible.builtin.file:
-        path: /etc/rancher/rke2
-        state: directory
-        owner: root
-        group: root
-        mode: '0755'
-
-    - name: Update or create the RKE2 config file
-      ansible.builtin.template:
-        src: config.yaml.j2
-        dest: /etc/rancher/rke2/config.yaml
-        owner: root
-        group: root
-        mode: '0644'
-
-    - name: Restart RKE2 service
-      ansible.builtin.service:
-        name: rke2-server
-        state: restarted
-
 
     - name: Kill firewall
       ansible.builtin.service:
@@ -58,15 +27,6 @@
         state: "started"
         enabled: "yes"
 
-    - name: Create rke2-canal.conf with specific contents
-      ansible.builtin.copy:
-        dest: /etc/NetworkManager/conf.d/rke2-canal.conf
-        content: |
-          [keyfile]
-          unmanaged-devices=interface-name:cali*;interface-name:flannel*
-        owner: root
-        group: root
-        mode: '0644'
 
     - name: Restart NetworkManager
       ansible.builtin.service:
