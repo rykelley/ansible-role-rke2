@@ -3,22 +3,39 @@
   hosts: all
   become: yes
   vars:
-    rke2_download_kubeconf: true
-    rke2_version: v1.30.8+rke2r1
+    # Cluster configuration
+    rke2_ha_mode: true
+    rke2_ha_mode_keepalived: true
+    rke2_ha_mode_kubevip: false
     rke2_api_ip: 10.10.1.30
+
+    # Version and architecture
+    rke2_version: v1.34.2+rke2r1
     rke2_architecture: amd64
+
+    # Networking
     rke2_cni: cilium
     rke2_cluster_cidr:
-      - 192.168.0.0/16
+      - 10.10.1.0/16
     rke2_service_cidr:
       - 172.16.0.0/16
-    rke2_cis_profile: ""
-    rke2_selinux: false
+    disable_kube_proxy: true
+
+    # Disable default CNI
+    rke2_disable: rke2-canal
+
+    # Cloud configuration
     rke2_disable_cloud_controller: true
     rke2_cloud_provider_name: "external"
-    disable_kube_proxy: true
-    rke2_custom_manifests: 
+    rke2_cis_profile: ""
+    rke2_selinux: false
+
+    # Custom manifests
+    rke2_custom_manifests:
       - manifests/rke2-cilium-config.yaml
 
+    # Download kubeconfig
+    rke2_download_kubeconf: true
+
   roles:
-    - role: lablabs.rke2
+    - role: .

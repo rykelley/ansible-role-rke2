@@ -25,9 +25,9 @@ rke2_api_ip: "{{ hostvars[groups[rke2_servers_group_name].0]['ansible_default_ip
 # rke2_api_cidr: 24
 
 # optional option for kubevip
-# rke2_interface: eth0
+rke2_interface: eth0
 # optional option for IPv4/IPv6 addresses to advertise for node
-rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
+# rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
 
 # kubevip load balancer IP range
 # rke2_loadbalancer_ip_range:
@@ -243,13 +243,13 @@ rke2_agents_group_name: workers
 
 # (Optional) Additional RKE2 server configuration options
 # You could find the flags at https://docs.rke2.io/reference/server_config
-rke2_server_options:
-  - node-ip: {{ rke2_bind_address }}  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
+# rke2_server_options:
+#   - node-ip: "{{ rke2_bind_address }}"  # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
 
 # (Optional) Additional RKE2 agent configuration options
 # You could find the flags at https://docs.rke2.io/reference/linux_agent_config
-rke2_agent_options:
-  - node-ip: {{ rke2_bind_address }} # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
+# rke2_agent_options:
+#   - node-ip: "{{ rke2_bind_address }}" # ex: (agent/networking) IPv4/IPv6 addresses to advertise for node
 
 
 # (Optional) Configure Proxy
