@@ -13,6 +13,11 @@
     rke2_version: v1.34.2+rke2r1
     rke2_architecture: amd64
 
+    # Network interface - specify the actual interface name on your Ubuntu servers
+    # Common names: ens18, ens33, eth0, enp0s3
+    # Leave commented to use default routing interface
+    # rke2_interface: ens18
+
     # Networking
     rke2_cni: cilium
     rke2_cluster_cidr:

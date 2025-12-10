@@ -25,9 +25,10 @@ rke2_api_ip: "{{ hostvars[groups[rke2_servers_group_name].0]['ansible_default_ip
 # rke2_api_cidr: 24
 
 # optional option for kubevip
-rke2_interface: eth0
+# rke2_interface: eth0
 # optional option for IPv4/IPv6 addresses to advertise for node
-# rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_' + rke2_interface]['ipv4']['address'] }}"
+# Note: bind-address is optional and only needed for specific network configurations
+# rke2_bind_address: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
 
 # kubevip load balancer IP range
 # rke2_loadbalancer_ip_range:

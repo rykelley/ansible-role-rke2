@@ -5,16 +5,20 @@ metadata:
   namespace: kube-system
 spec:
   valuesContent: |-
-    kubeProxyReplacement: strict
+    kubeProxyReplacement: true
     k8sServiceHost: 10.10.1.30
     k8sServicePort: 6443
+    ipam:
+      mode: kubernetes
+    tunnel: vxlan
+    enableIPv4Masquerade: true
     localRedirectPolicy: true
-    autoDirectNodeRoutes: true
+    autoDirectNodeRoutes: false
     hubble:
       enabled: true
       relay:
         enabled: true
       ui:
         enabled: true
-    cni:
-      chainingMode: "none"
+    operator:
+      replicas: 1

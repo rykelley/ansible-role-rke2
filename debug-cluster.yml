@@ -1,0 +1,63 @@
+---
+- name: Debug RKE2 Cluster Status
+  hosts: masters[0]
+  become: yes
+  tasks:
+    - name: Check if RKE2 is running
+      ansible.builtin.shell: |
+        systemctl status rke2-server
+      register: rke2_status
+      ignore_errors: yes
+
+    - name: Display RKE2 service status
+      ansible.builtin.debug:
+        var: rke2_status.stdout_lines
+
+    - name: Get node status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes -o wide
+      register: nodes_status
+      ignore_errors: yes
+
+    - name: Display nodes
+      ansible.builtin.debug:
+        var: nodes_status.stdout_lines
+
+    - name: Get pod status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -A -o wide
+      register: pods_status
+      ignore_errors: yes
+
+    - name: Display pods
+      ansible.builtin.debug:
+        var: pods_status.stdout_lines
+
+    - name: Check Cilium status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l k8s-app=cilium
+      register: cilium_status
+      ignore_errors: yes
+
+    - name: Display Cilium pods
+      ansible.builtin.debug:
+        var: cilium_status.stdout_lines
+
+    - name: Get network interfaces
+      ansible.builtin.shell: |
+        ip addr show
+      register: network_interfaces
+
+    - name: Display network interfaces
+      ansible.builtin.debug:
+        var: network_interfaces.stdout_lines
+
+    - name: Check RKE2 logs (last 50 lines)
+      ansible.builtin.shell: |
+        journalctl -u rke2-server -n 50 --no-pager
+      register: rke2_logs
+      ignore_errors: yes
+
+    - name: Display RKE2 logs
+      ansible.builtin.debug:
+        var: rke2_logs.stdout_lines

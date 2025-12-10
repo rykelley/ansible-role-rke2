@@ -1,0 +1,53 @@
+---
+- name: Fix Cilium Installation
+  hosts: masters[0]
+  become: yes
+  tasks:
+    - name: Delete failed Cilium Helm install job
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml delete job -n kube-system helm-install-rke2-cilium
+      ignore_errors: yes
+
+    - name: Wait for job deletion
+      ansible.builtin.pause:
+        seconds: 10
+
+    - name: Copy updated Cilium config to master
+      ansible.builtin.copy:
+        src: manifests/rke2-cilium-config.yaml
+        dest: /var/lib/rancher/rke2/server/manifests/rke2-cilium-config.yaml
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Wait for Cilium to redeploy
+      ansible.builtin.shell: |
+        set -o pipefail
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l app.kubernetes.io/name=cilium -o jsonpath='{.items[*].status.phase}' | grep -c Running || echo 0
+      args:
+        executable: /bin/bash
+      register: cilium_running
+      until: cilium_running.stdout | int > 0
+      retries: 30
+      delay: 10
+      changed_when: false
+
+    - name: Check node status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes
+      register: node_status
+      changed_when: false
+
+    - name: Display node status
+      ansible.builtin.debug:
+        var: node_status.stdout_lines
+
+    - name: Check Cilium pods
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l app.kubernetes.io/name=cilium
+      register: cilium_pods
+      changed_when: false
+
+    - name: Display Cilium pods
+      ansible.builtin.debug:
+        var: cilium_pods.stdout_lines

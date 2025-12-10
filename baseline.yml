@@ -22,14 +22,12 @@
         state: "started"
         enabled: yes
 
+    - name: Check if NetworkManager is installed
+      ansible.builtin.stat:
+        path: /usr/sbin/NetworkManager
+      register: networkmanager_check
 
-    - name: Restart NetworkManager
-      ansible.builtin.service:
-        state: restarted
-        name: NetworkManager
-
-
-    - name: Disable DNS settings for Network Manager
+    - name: Disable DNS settings for NetworkManager (if installed)
       ansible.builtin.copy:
         dest: /etc/NetworkManager/conf.d/90-dns-none.conf
         content: |
@@ -38,14 +36,9 @@
         owner: root
         group: root
         mode: '0644'
+      when: networkmanager_check.stat.exists
 
-    - name: Restart NetworkManager
-      ansible.builtin.service:
-        state: restarted
-        name: NetworkManager
-
-
-    - name: Adjust DNS settings
+    - name: Configure DNS settings
       ansible.builtin.copy:
         dest: /etc/resolv.conf
         content: |
@@ -55,13 +48,9 @@
         group: root
         mode: '0644'
 
-    - name: Restart NetworkManager
+    - name: Restart NetworkManager (if installed)
       ansible.builtin.service:
         state: restarted
         name: NetworkManager
-
-
-    - name: Reload NetworkManager
-      ansible.builtin.service:
-        name: NetworkManager
-        state: reloaded
+      when: networkmanager_check.stat.exists
+      ignore_errors: yes
