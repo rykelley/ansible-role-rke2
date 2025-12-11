@@ -1,0 +1,4 @@
+---
+ansible_user: rykelley
+ansible_password: Mustang66.!
+ansible_become_password: Mustang66.!

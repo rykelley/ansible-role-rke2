@@ -1,0 +1,261 @@
+---
+- name: Debug RKE2 Cluster Status
+  hosts: masters[0]
+  become: yes
+  tasks:
+    # ========== SERVICE STATUS ==========
+    - name: Check if RKE2 is running
+      ansible.builtin.shell: |
+        systemctl status rke2-server
+      register: rke2_status
+      ignore_errors: yes
+
+    - name: Display RKE2 service status
+      ansible.builtin.debug:
+        var: rke2_status.stdout_lines
+
+    # ========== CLUSTER RESOURCES ==========
+    - name: Get node status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get nodes -o wide
+      register: nodes_status
+      ignore_errors: yes
+
+    - name: Display nodes
+      ansible.builtin.debug:
+        var: nodes_status.stdout_lines
+
+    - name: Get detailed node conditions
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml describe nodes
+      register: nodes_describe
+      ignore_errors: yes
+
+    - name: Display node details
+      ansible.builtin.debug:
+        var: nodes_describe.stdout_lines
+
+    - name: Get pod status
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -A -o wide
+      register: pods_status
+      ignore_errors: yes
+
+    - name: Display pods
+      ansible.builtin.debug:
+        var: pods_status.stdout_lines
+
+    # ========== CNI STATUS ==========
+    - name: Check Cilium pods
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l k8s-app=cilium -o wide
+      register: cilium_status
+      ignore_errors: yes
+
+    - name: Display Cilium pods
+      ansible.builtin.debug:
+        var: cilium_status.stdout_lines
+
+    - name: Check Cilium operator
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l name=cilium-operator -o wide
+      register: cilium_operator_status
+      ignore_errors: yes
+
+    - name: Display Cilium operator pods
+      ansible.builtin.debug:
+        var: cilium_operator_status.stdout_lines
+
+    # ========== POD LOGS ==========
+    - name: Get list of all pods in JSON format
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -A -o json
+      register: all_pods_json
+      ignore_errors: yes
+
+    - name: Parse pod names and namespaces
+      ansible.builtin.set_fact:
+        pod_list: "{{ all_pods_json.stdout | from_json | json_query('items[*].{name: metadata.name, namespace: metadata.namespace}') }}"
+      when: all_pods_json.rc == 0
+      ignore_errors: yes
+
+    - name: Get logs for each pod (last 50 lines)
+      ansible.builtin.shell: |
+        echo "===== Pod: {{ item.name }} (Namespace: {{ item.namespace }}) ====="
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml logs -n {{ item.namespace }} {{ item.name }} --tail=50 --all-containers=true 2>&1 || echo "Failed to get logs for {{ item.name }}"
+        echo ""
+      loop: "{{ pod_list | default([]) }}"
+      register: pod_logs
+      ignore_errors: yes
+      when: pod_list is defined
+
+    - name: Display pod logs
+      ansible.builtin.debug:
+        msg: "{{ item.stdout_lines }}"
+      loop: "{{ pod_logs.results | default([]) }}"
+      when: pod_logs.results is defined
+      loop_control:
+        label: "Pod logs"
+
+    # ========== EVENTS ==========
+    - name: Get cluster events
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get events -A --sort-by='.lastTimestamp' | tail -100
+      register: cluster_events
+      ignore_errors: yes
+
+    - name: Display cluster events
+      ansible.builtin.debug:
+        var: cluster_events.stdout_lines
+
+    # ========== NETWORK DETAILS ==========
+    - name: Get network interfaces
+      ansible.builtin.shell: |
+        ip addr show
+      register: network_interfaces
+
+    - name: Display network interfaces
+      ansible.builtin.debug:
+        var: network_interfaces.stdout_lines
+
+    - name: Get routing table
+      ansible.builtin.shell: |
+        ip route show
+      register: routing_table
+
+    - name: Display routing table
+      ansible.builtin.debug:
+        var: routing_table.stdout_lines
+
+    - name: Check iptables rules
+      ansible.builtin.shell: |
+        iptables -L -n -v | head -100
+      register: iptables_rules
+      ignore_errors: yes
+
+    - name: Display iptables rules
+      ansible.builtin.debug:
+        var: iptables_rules.stdout_lines
+
+    # ========== SYSTEM LOGS ==========
+    - name: Check RKE2 server logs (last 100 lines)
+      ansible.builtin.shell: |
+        journalctl -u rke2-server -n 100 --no-pager
+      register: rke2_logs
+      ignore_errors: yes
+
+    - name: Display RKE2 server logs
+      ansible.builtin.debug:
+        var: rke2_logs.stdout_lines
+
+    - name: Check containerd logs (last 50 lines)
+      ansible.builtin.shell: |
+        journalctl -u containerd -n 50 --no-pager
+      register: containerd_logs
+      ignore_errors: yes
+
+    - name: Display containerd logs
+      ansible.builtin.debug:
+        var: containerd_logs.stdout_lines
+
+    - name: Check syslog (last 100 lines, filtered for errors)
+      ansible.builtin.shell: |
+        journalctl -n 100 --no-pager | grep -i -E "(error|fail|warn|cni|cilium|rke2)" || journalctl -n 100 --no-pager
+      register: syslog_errors
+      ignore_errors: yes
+
+    - name: Display syslog errors
+      ansible.builtin.debug:
+        var: syslog_errors.stdout_lines
+
+    - name: Check kernel messages (last 50 lines)
+      ansible.builtin.shell: |
+        dmesg | tail -50
+      register: kernel_messages
+      ignore_errors: yes
+
+    - name: Display kernel messages
+      ansible.builtin.debug:
+        var: kernel_messages.stdout_lines
+
+    # ========== ETCD STATUS ==========
+    - name: Check etcd health
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pods -n kube-system -l component=etcd -o wide
+      register: etcd_pods
+      ignore_errors: yes
+
+    - name: Display etcd pods
+      ansible.builtin.debug:
+        var: etcd_pods.stdout_lines
+
+    # ========== HELM CHARTS STATUS ==========
+    - name: Check Helm releases
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get helmcharts -A
+      register: helm_charts
+      ignore_errors: yes
+
+    - name: Display Helm charts
+      ansible.builtin.debug:
+        var: helm_charts.stdout_lines
+
+    - name: Check HelmChartConfig resources
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get helmchartconfig -A -o yaml
+      register: helm_chart_configs
+      ignore_errors: yes
+
+    - name: Display HelmChartConfig
+      ansible.builtin.debug:
+        var: helm_chart_configs.stdout_lines
+
+    # ========== PERSISTENT VOLUMES ==========
+    - name: Check persistent volumes
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get pv,pvc -A
+      register: persistent_volumes
+      ignore_errors: yes
+
+    - name: Display persistent volumes
+      ansible.builtin.debug:
+        var: persistent_volumes.stdout_lines
+
+    # ========== CONFIGMAPS AND SECRETS ==========
+    - name: Check ConfigMaps in kube-system
+      ansible.builtin.shell: |
+        /var/lib/rancher/rke2/bin/kubectl --kubeconfig /etc/rancher/rke2/rke2.yaml get configmaps -n kube-system
+      register: configmaps
+      ignore_errors: yes
+
+    - name: Display ConfigMaps
+      ansible.builtin.debug:
+        var: configmaps.stdout_lines
+
+    # ========== SYSTEM RESOURCES ==========
+    - name: Check disk usage
+      ansible.builtin.shell: |
+        df -h
+      register: disk_usage
+
+    - name: Display disk usage
+      ansible.builtin.debug:
+        var: disk_usage.stdout_lines
+
+    - name: Check memory usage
+      ansible.builtin.shell: |
+        free -h
+      register: memory_usage
+
+    - name: Display memory usage
+      ansible.builtin.debug:
+        var: memory_usage.stdout_lines
+
+    - name: Check top processes
+      ansible.builtin.shell: |
+        ps aux --sort=-%mem | head -20
+      register: top_processes
+
+    - name: Display top processes
+      ansible.builtin.debug:
+        var: top_processes.stdout_lines
